@@ -1,0 +1,55 @@
+name: Validate API examples
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate JSON artifacts
+        run: |
+          python -m json.tool postman/portiqa.postman_collection.json > /dev/null
+          python -m json.tool sample-responses/evaluation.success.json > /dev/null
+
+      - name: Validate example syntax
+        run: |
+          python -m py_compile examples/python/evaluate.py
+          node --check examples/javascript/evaluate.mjs
+          php -l examples/php/evaluate.php
+          sh -n examples/curl/evaluate.sh
+
+      - name: Check public credential policy
+        shell: bash
+        run: |
+          if grep -RIE --exclude-dir=.git --exclude='.env.example' 'ptq_[[:alnum:]_-]{8,}' .; then
+            echo 'Potential credential found.' >&2
+            exit 1
+          fi
+          test "$(grep -c '^PORTIQA_API_KEY=$' .env.example)" -eq 1
+          grep -q 'scheme: bearer' openapi/openapi.yaml
+          python -c "import json; p=json.load(open('postman/portiqa.postman_collection.json')); assert p['auth']['type'] == 'bearer'"
+
+      - name: Lint OpenAPI contract
+        env:
+          REDOCLY_TELEMETRY: "off"
+          REDOCLY_SUPPRESS_UPDATE_NOTICE: "true"
+        run: npx --yes @redocly/cli@2.47.0 lint openapi/openapi.yaml

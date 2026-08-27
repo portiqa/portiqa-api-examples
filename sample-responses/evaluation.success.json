@@ -1,0 +1,25 @@
+{
+  "ok": true,
+  "evaluation": {
+    "engine_version": "2026-03-07-v5",
+    "score": 75.3,
+    "status": "Good",
+    "max_position_weight": 45.45,
+    "effective_positions": 2.58,
+    "coverage": {
+      "beta_pct": 100,
+      "grade_pct": 0,
+      "dividend_pct": 0,
+      "trend_pct": 100,
+      "macro_pct": 100
+    },
+    "portfolio_input": {
+      "cash_balance": 5000,
+      "holdings_value": 55000,
+      "total_value": 60000,
+      "cash_pct": 8.333333333333332,
+      "invested_pct": 91.66666666666666,
+      "missing_tickers": []
+    }
+  }
+}

@@ -1,0 +1,338 @@
+openapi: 3.1.0
+info:
+  title: PORTIQA Portfolio Analysis API
+  version: "1.0.0"
+  summary: Evaluate the structure and health of a portfolio.
+  description: >-
+    Send ticker positions and cash to receive a portfolio evaluation containing
+    scores, coverage, diagnostics, insights, and suggestions. The value in
+    `info.version` is the public API contract version. It is independent of the
+    `evaluation.engine_version` returned with each result.
+  contact:
+    name: PORTIQA
+    email: hello@portiqa.ai
+    url: https://portiqa.ai/docs/
+servers:
+  - url: https://portiqa.ai
+    description: Production
+tags:
+  - name: Portfolio evaluation
+security:
+  - bearerAuth: []
+paths:
+  /evaluate:
+    post:
+      tags:
+        - Portfolio evaluation
+      operationId: evaluatePortfolio
+      summary: Evaluate a portfolio
+      description: >-
+        Evaluates the supplied ticker positions using PORTIQA's current data and
+        evaluator engine. Values in the response are quantitative information,
+        not investment advice.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvaluationRequest"
+            examples:
+              canonical:
+                summary: Three positions and a cash balance
+                value:
+                  risk_level: medium
+                  cash_balance: 5000
+                  positions:
+                    - ticker: AAPL
+                      market_value: 25000
+                    - ticker: MSFT
+                      market_value: 22000
+                    - ticker: NVDA
+                      market_value: 8000
+      responses:
+        "200":
+          description: Portfolio evaluated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvaluationEnvelope"
+              examples:
+                success:
+                  summary: Sanitized evaluation excerpt
+                  value:
+                    {"ok": true, "evaluation": {"engine_version": "2026-03-07-v5", "score": 75.3, "status": "Good", "max_position_weight": 45.45, "effective_positions": 2.58, "coverage": {"beta_pct": 100, "grade_pct": 0, "dividend_pct": 0, "trend_pct": 100, "macro_pct": 100}, "portfolio_input": {"cash_balance": 5000, "holdings_value": 55000, "total_value": 60000, "cash_pct": 8.333333333333332, "invested_pct": 91.66666666666666, "missing_tickers": []}}}
+        "400":
+          description: The JSON is invalid, positions are missing, or no position can be evaluated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                missingPositions:
+                  value:
+                    ok: false
+                    error: missing_positions
+                    message: Provide at least one position with ticker and market_value.
+                noEvaluablePositions:
+                  value:
+                    ok: false
+                    error: no_evaluable_positions
+                    message: No positions could be evaluated.
+                    missing_tickers:
+                      - UNKNOWN
+        "401":
+          description: The Bearer token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                unauthorized:
+                  value:
+                    ok: false
+                    error: unauthorized
+                    message: Missing or invalid API key.
+        "402":
+          description: The subscription is inactive.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                inactiveSubscription:
+                  value:
+                    ok: false
+                    error: subscription_inactive
+                    message: An active subscription is required.
+        "405":
+          description: The endpoint supports POST only.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                wrongMethod:
+                  value:
+                    ok: false
+                    error: method_not_allowed
+        "413":
+          description: The number of unique tickers exceeds the plan limit.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanLimitError"
+              examples:
+                tooManyTickers:
+                  value:
+                    ok: false
+                    error: too_many_tickers
+                    message: The request exceeds the plan's ticker limit.
+                    max_tickers: 5
+                    received: 6
+        "429":
+          description: The monthly request limit has been reached.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                rateLimited:
+                  value:
+                    ok: false
+                    error: too_many_requests
+                    message: The monthly request limit has been reached.
+        "500":
+          description: The evaluation could not be completed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                evaluationFailed:
+                  value:
+                    ok: false
+                    error: evaluation_failed
+                    message: The evaluation could not be completed.
+        "503":
+          description: Authentication service is temporarily unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                unavailable:
+                  value:
+                    ok: false
+                    error: auth_db_unavailable
+                    message: Authentication is temporarily unavailable.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: PORTIQA API key
+      description: >-
+        Send the API key in the `Authorization` header as a Bearer token. API
+        keys must be kept in trusted server-side systems.
+  schemas:
+    EvaluationRequest:
+      type: object
+      required:
+        - positions
+      properties:
+        risk_level:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+          default: medium
+          description: Target risk profile used for the evaluation.
+        cash_balance:
+          type: number
+          minimum: 0
+          default: 0
+          description: Cash in the same currency as all position market values.
+        positions:
+          type: array
+          minItems: 1
+          description: Portfolio positions in the canonical public request format.
+          items:
+            $ref: "#/components/schemas/Position"
+      additionalProperties: false
+    Position:
+      type: object
+      required:
+        - ticker
+      properties:
+        ticker:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: "^[A-Za-z0-9._^\\-]+$"
+          description: Market ticker symbol, including an exchange suffix when needed.
+          examples:
+            - AAPL
+            - EQNR.OL
+        market_value:
+          type: number
+          minimum: 0
+          description: Preferred when the client already knows the position's total market value.
+        amount:
+          type: number
+          minimum: 0
+          description: Number of units; used with the latest available close price when market_value is absent.
+      anyOf:
+        - required:
+            - market_value
+        - required:
+            - amount
+      additionalProperties: false
+    EvaluationEnvelope:
+      type: object
+      required:
+        - ok
+        - evaluation
+      properties:
+        ok:
+          type: boolean
+          const: true
+        evaluation:
+          $ref: "#/components/schemas/Evaluation"
+      additionalProperties: false
+    Evaluation:
+      type: object
+      description: Selected fields from a successful portfolio evaluation.
+      required: [engine_version, score, status, max_position_weight, effective_positions, coverage, portfolio_input]
+      properties:
+        engine_version: { type: string }
+        score: { type: number, minimum: 0, maximum: 100 }
+        status: { type: string }
+        max_position_weight: { $ref: "#/components/schemas/Percentage" }
+        effective_positions: { type: number }
+        coverage: { $ref: "#/components/schemas/Coverage" }
+        portfolio_input: { $ref: "#/components/schemas/PortfolioInput" }
+      additionalProperties: true
+    Coverage:
+      type: object
+      properties:
+        beta_pct:
+          $ref: "#/components/schemas/Percentage"
+        grade_pct:
+          $ref: "#/components/schemas/Percentage"
+        dividend_pct:
+          $ref: "#/components/schemas/Percentage"
+        trend_pct:
+          $ref: "#/components/schemas/Percentage"
+        macro_pct:
+          $ref: "#/components/schemas/Percentage"
+      additionalProperties:
+        type: number
+    Percentage:
+      type: number
+      minimum: 0
+      maximum: 100
+    PortfolioInput:
+      type: object
+      required:
+        - cash_balance
+        - holdings_value
+        - total_value
+        - cash_pct
+        - invested_pct
+        - missing_tickers
+      properties:
+        cash_balance:
+          type: number
+          minimum: 0
+        holdings_value:
+          type: number
+          minimum: 0
+        total_value:
+          type: number
+          minimum: 0
+        cash_pct:
+          $ref: "#/components/schemas/Percentage"
+        invested_pct:
+          $ref: "#/components/schemas/Percentage"
+        missing_tickers:
+          type: array
+          items:
+            type: string
+      additionalProperties: true
+    Error:
+      type: object
+      required:
+        - ok
+        - error
+      properties:
+        ok:
+          type: boolean
+          const: false
+        error:
+          type: string
+          description: Stable machine-readable error code.
+        message:
+          type: string
+          description: Human-readable explanation; wording may change.
+        missing_tickers:
+          type: array
+          items:
+            type: string
+      additionalProperties: true
+    PlanLimitError:
+      allOf:
+        - $ref: "#/components/schemas/Error"
+        - type: object
+          properties:
+            plan:
+              type: string
+            max_tickers:
+              type: integer
+              minimum: 1
+            received:
+              type: integer
+              minimum: 1
+externalDocs:
+  description: PORTIQA API documentation
+  url: https://portiqa.ai/docs/api-reference.html

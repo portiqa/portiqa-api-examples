@@ -1,0 +1,21 @@
+# Local credentials
+.env
+.env.*
+!.env.example
+
+# Runtime output
+*.log
+coverage/
+.coverage
+.pytest_cache/
+__pycache__/
+*.py[cod]
+node_modules/
+vendor/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
