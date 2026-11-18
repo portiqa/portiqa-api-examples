@@ -31,6 +31,7 @@ curl_setopt_array($handle, [
     CURLOPT_TIMEOUT => 20,
     CURLOPT_HTTPHEADER => [
         'Authorization: Bearer ' . $apiKey,
+        'Portiqa-Response-Profile: public',
         'Content-Type: application/json',
         'Accept: application/json',
     ],
@@ -47,15 +48,15 @@ if ($raw === false) {
 }
 
 try {
-    $body = json_decode((string) $raw, true, flags: JSON_THROW_ON_ERROR);
+    $body = json_decode((string) $raw, flags: JSON_THROW_ON_ERROR);
 } catch (JsonException) {
     fwrite(STDERR, "PORTIQA returned HTTP {$status} with non-JSON data.\n");
     exit(1);
 }
 
-if ($status < 200 || $status >= 300 || ($body['ok'] ?? false) !== true || !is_array($body['evaluation'] ?? null)) {
+if ($status < 200 || $status >= 300 || ($body->ok ?? false) !== true || !is_object($body->evaluation ?? null)) {
     fwrite(STDERR, "PORTIQA returned HTTP {$status}: {$raw}\n");
     exit(1);
 }
 
-echo json_encode($body['evaluation'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL;
+echo json_encode($body->evaluation, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL;

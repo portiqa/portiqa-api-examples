@@ -6,6 +6,7 @@ set -eu
 curl --fail-with-body --silent --show-error \
   --request POST 'https://portiqa.ai/evaluate' \
   --header "Authorization: Bearer ${PORTIQA_API_KEY}" \
+  --header 'Portiqa-Response-Profile: public' \
   --header 'Content-Type: application/json' \
   --header 'Accept: application/json' \
   --connect-timeout 5 \

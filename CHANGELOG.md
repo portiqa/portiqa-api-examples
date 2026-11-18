@@ -1,7 +1,12 @@
 # Changelog
 
-API contract versions follow semantic versioning. Evaluator engine versions are
-reported independently in API responses.
+The OpenAPI contract and the evaluator engine report their versions independently.
+
+## 2026-11-18
+
+- All four examples and the Postman collection request the public response profile.
+- Updated the OpenAPI contract and sample response to illustrate score drivers,
+  qualitative component assessments, holding exposures and data coverage.
 
 ## [1.0.0] - 2026-08-27
 

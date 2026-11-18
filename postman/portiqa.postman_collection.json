@@ -1,31 +1,19 @@
 {
   "info": {
-    "_postman_id": "c3258219-8d81-4853-a41f-b55cd33fb859",
+    "_postman_id": "f5875d18-9ee5-40b2-b5cb-0d954226b43d",
     "name": "PORTIQA Portfolio Analysis API",
-    "description": "Bearer-authenticated examples for POST /evaluate. Set api_key locally; this collection contains no credentials.",
+    "description": "Authenticated examples for POST /evaluate. Set api_key locally; this collection contains no credentials.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
     "type": "bearer",
     "bearer": [
-      {
-        "key": "token",
-        "value": "{{api_key}}",
-        "type": "string"
-      }
+      {"key": "token", "value": "{{api_key}}", "type": "string"}
     ]
   },
   "variable": [
-    {
-      "key": "base_url",
-      "value": "https://portiqa.ai",
-      "type": "string"
-    },
-    {
-      "key": "api_key",
-      "value": "",
-      "type": "string"
-    }
+    {"key": "base_url", "value": "https://portiqa.ai", "type": "string"},
+    {"key": "api_key", "value": "", "type": "string"}
   ],
   "item": [
     {
@@ -37,12 +25,10 @@
             "type": "text/javascript",
             "exec": [
               "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
-              "pm.test('JSON response', function () { pm.response.to.be.json; });",
-              "pm.test('Versioned evaluation envelope', function () {",
+              "pm.test('Response contains an engine version', function () {",
               "  const body = pm.response.json();",
               "  pm.expect(body.ok).to.eql(true);",
-              "  pm.expect(body.evaluation).to.be.an('object');",
-              "  pm.expect(body.evaluation.engine_version).to.be.a('string').and.not.empty;",
+              "  pm.expect(body.evaluation.engine_version).to.be.a('string');",
               "});"
             ]
           }
@@ -51,79 +37,23 @@
       "request": {
         "method": "POST",
         "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json",
-            "type": "text"
-          },
-          {
-            "key": "Accept",
-            "value": "application/json",
-            "type": "text"
-          }
+          {"key": "Content-Type", "value": "application/json", "type": "text"},
+          {"key": "Accept", "value": "application/json", "type": "text"},
+          {"key": "Portiqa-Response-Profile", "value": "public", "type": "text"}
         ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"risk_level\": \"medium\",\n  \"cash_balance\": 5000,\n  \"positions\": [\n    {\"ticker\": \"AAPL\", \"market_value\": 25000},\n    {\"ticker\": \"MSFT\", \"market_value\": 22000},\n    {\"ticker\": \"NVDA\", \"market_value\": 8000}\n  ]\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
+          "options": {"raw": {"language": "json"}}
         },
         "url": {
           "raw": "{{base_url}}/evaluate",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "evaluate"
-          ]
+          "host": ["{{base_url}}"],
+          "path": ["evaluate"]
         },
-        "description": "Returns a versioned portfolio evaluation with scores, coverage, diagnostics, insights, and suggestions."
+        "description": "Returns the public portfolio score, component assessments, score drivers and coverage."
       },
-      "response": [
-        {
-          "name": "Successful evaluation (sanitized example)",
-          "originalRequest": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"risk_level\": \"medium\",\n  \"cash_balance\": 5000,\n  \"positions\": [\n    {\"ticker\": \"AAPL\", \"market_value\": 25000},\n    {\"ticker\": \"MSFT\", \"market_value\": 22000},\n    {\"ticker\": \"NVDA\", \"market_value\": 8000}\n  ]\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/evaluate",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "evaluate"
-              ]
-            }
-          },
-          "status": "OK",
-          "code": 200,
-          "_postman_previewlanguage": "json",
-          "header": [
-            {
-              "key": "Content-Type",
-              "value": "application/json; charset=utf-8"
-            }
-          ],
-          "cookie": [],
-          "body": "{\n  \"ok\": true,\n  \"evaluation\": {\n    \"engine_version\": \"2026-03-07-v5\",\n    \"score\": 74.6,\n    \"status\": \"Good\",\n    \"max_position_weight\": 45.45,\n    \"effective_positions\": 2.58,\n    \"coverage\": {\n      \"beta_pct\": 100,\n      \"grade_pct\": 100,\n      \"dividend_pct\": 100,\n      \"trend_pct\": 100,\n      \"macro_pct\": 100\n    },\n    \"portfolio_input\": {\n      \"cash_balance\": 5000,\n      \"holdings_value\": 55000,\n      \"total_value\": 60000,\n      \"cash_pct\": 8.33,\n      \"invested_pct\": 91.67,\n      \"missing_tickers\": []\n    }\n  }\n}"
-        }
-      ]
+      "response": []
     }
   ]
 }

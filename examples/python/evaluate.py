@@ -30,6 +30,7 @@ def main() -> int:
         method="POST",
         headers={
             "Authorization": f"Bearer {api_key}",
+            "Portiqa-Response-Profile": "public",
             "Content-Type": "application/json",
             "Accept": "application/json",
         },
@@ -49,7 +50,7 @@ def main() -> int:
         print("PORTIQA returned a non-JSON response.", file=sys.stderr)
         return 1
 
-    if body.get("ok") is not True or not isinstance(body.get("evaluation"), dict):
+    if not isinstance(body, dict) or body.get("ok") is not True or not isinstance(body.get("evaluation"), dict):
         print(f"Unexpected response: {json.dumps(body)}", file=sys.stderr)
         return 1
 

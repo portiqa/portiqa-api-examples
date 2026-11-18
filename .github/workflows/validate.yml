@@ -29,6 +29,7 @@ jobs:
         run: |
           python -m json.tool postman/portiqa.postman_collection.json > /dev/null
           python -m json.tool sample-responses/evaluation.success.json > /dev/null
+          python tests/validate_public_sample.py
 
       - name: Validate example syntax
         run: |

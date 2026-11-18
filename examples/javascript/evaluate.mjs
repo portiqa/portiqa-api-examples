@@ -17,6 +17,7 @@ try {
     signal: controller.signal,
     headers: {
       Authorization: `Bearer ${apiKey}`,
+      'Portiqa-Response-Profile': 'public',
       'Content-Type': 'application/json',
       Accept: 'application/json'
     },
@@ -39,7 +40,8 @@ try {
     throw new Error(`PORTIQA returned HTTP ${response.status} with non-JSON data.`);
   }
 
-  if (!response.ok || body.ok !== true || typeof body.evaluation !== 'object') {
+  if (!response.ok || body?.ok !== true || !body.evaluation ||
+      typeof body.evaluation !== 'object' || Array.isArray(body.evaluation)) {
     throw new Error(`PORTIQA returned HTTP ${response.status}: ${JSON.stringify(body)}`);
   }
 
